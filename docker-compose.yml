@@ -47,3 +47,23 @@ volumes:
 networks:
   app-network:
     driver: bridge
+
+analytics:
+    build:
+      context: ./analytics-service
+      dockerfile: Dockerfile
+    container_name: todo-analytics
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
