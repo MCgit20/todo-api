@@ -2,47 +2,46 @@ const express = require('express');
 const router = express.Router();
 const TaskModel = require('../models/task');
 
-// GET /api/tasks : lister toutes les tâches
-router.get('/', (req, res) => {
-  res.json(TaskModel.getAll());
+router.get('/', async (req, res, next) => {
+  try {
+    const tasks = await TaskModel.getAll();
+    res.json(tasks);
+  } catch (err) { next(err); }
 });
 
-// GET /api/tasks/:id : voir une tâche
-router.get('/:id', (req, res) => {
-  const task = TaskModel.getById(req.params.id);
-  if (!task) return res.status(404).json({ error: 'Tâche non trouvée' });
-  res.json(task);
+router.get('/:id', async (req, res, next) => {
+  try {
+    const task = await TaskModel.getById(req.params.id);
+    if (!task) return res.status(404).json({ error: 'Tâche non trouvée' });
+    res.json(task);
+  } catch (err) { next(err); }
 });
 
-// POST /api/tasks : créer une tâche (avec validation basique de taille/format)
-router.post('/', (req, res) => {
-  const { description } = req.body;
-  
-  if (!description || typeof description !== 'string') {
-    return res.status(400).json({ error: 'La description est requise et doit être une chaîne' });
-  }
-
-  // Sécurité : Refuser les chaînes trop longues (ex: > 1000 caractères)
-  if (description.length > 1000) {
-    return res.status(400).json({ error: 'Description trop longue (max 1000 caractères)' });
-  }
-
-  const newTask = TaskModel.create(description);
-  res.status(201).json(newTask);
+router.post('/', async (req, res, next) => {
+  try {
+    const { description } = req.body;
+    if (!description || typeof description !== 'string' || description.length > 1000) {
+      return res.status(400).json({ error: 'Description invalide ou trop longue' });
+    }
+    const newTask = await TaskModel.create(description);
+    res.status(201).json(newTask);
+  } catch (err) { next(err); }
 });
 
-// PUT /api/tasks/:id : modifier une tâche
-router.put('/:id', (req, res) => {
-  const updated = TaskModel.update(req.params.id, req.body);
-  if (!updated) return res.status(404).json({ error: 'Tâche non trouvée' });
-  res.json(updated);
+router.put('/:id', async (req, res, next) => {
+  try {
+    const updated = await TaskModel.update(req.params.id, req.body);
+    if (!updated) return res.status(404).json({ error: 'Tâche non trouvée' });
+    res.json(updated);
+  } catch (err) { next(err); }
 });
 
-// DELETE /api/tasks/:id : supprimer une tâche
-router.delete('/:id', (req, res) => {
-  const deleted = TaskModel.delete(req.params.id);
-  if (!deleted) return res.status(404).json({ error: 'Tâche non trouvée' });
-  res.status(204).send();
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const deleted = await TaskModel.delete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Tâche non trouvée' });
+    res.status(204).send();
+  } catch (err) { next(err); }
 });
 
 module.exports = router;
